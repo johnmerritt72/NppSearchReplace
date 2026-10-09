@@ -26,11 +26,11 @@ own regex engine, and optional live highlighting of every match in the active do
 | Dot | `.` also matches newline (dimmed and ignored while Regex is off) |
 | Case | Match case |
 | Words | Whole word only (dimmed and ignored while Regex is on) |
-| Wrap | Wrap around at the end or start of the document |
+| Loop | Loop around to the start (or end) of the document when the search reaches the end (or start) |
 | Highlight | Highlight every match in the active document while you type (capped at 20,000) |
 
 Buttons: Find First, Find Next, Find Prev, Find Last, Replace, Replace All, Count. Find First and
-Find Last jump to the first or last match in the document regardless of the caret or Wrap.
+Find Last jump to the first or last match in the document regardless of the caret or Loop.
 
 | Key (inside either box) | Action |
 |---|---|

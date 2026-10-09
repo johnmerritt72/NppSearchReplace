@@ -97,7 +97,7 @@ namespace NppSearchReplace.Forms
             _dotToggle = MakeToggle("Dot", "'.' also matches newline (regex only)");
             _caseToggle = MakeToggle("Case", "Match case");
             _wordsToggle = MakeToggle("Words", "Whole word only (ignored when Regex is on)");
-            _loopToggle = MakeToggle("Wrap", "Wrap around at the end or start of the document");
+            _loopToggle = MakeToggle("Loop", "Loop around to the start (or end) of the document when the search reaches the end (or start)");
             _highlightToggle = MakeToggle("Highlight", "Highlight every match in the document while typing");
             toolbar.Controls.AddRange(new Control[]
             {

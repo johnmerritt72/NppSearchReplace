@@ -20,9 +20,9 @@ café apple
 - [ ] The history ▾ is a small button at the top-right corner of each box, not a full-height bar.
 
 ## Searching
-- [ ] `apple`, Wrap on: three Ctrl+Enter presses select each occurrence, the fourth reports `Wrapped (line 1)`.
-- [ ] Wrap off at the last match: `No more matches`.
-- [ ] Find First selects the first `apple` (line 1) from anywhere; Find Last selects the last `apple` (line 3) from anywhere, both with Wrap off.
+- [ ] `apple`, Loop on: three Ctrl+Enter presses select each occurrence, the fourth reports `Wrapped (line 1)`.
+- [ ] Loop off at the last match: `No more matches`.
+- [ ] Find First selects the first `apple` (line 1) from anywhere; Find Last selects the last `apple` (line 3) from anywhere, both with Loop off.
 - [ ] Case off finds `banana` and `Banana`; Case on finds only `banana`.
 - [ ] Words on: `app` finds nothing; `apple` finds three.
 - [ ] `café apple` (non-ASCII) is found with the selection exactly covering it; `apple` on line 3 is selected without a one-byte shift.
