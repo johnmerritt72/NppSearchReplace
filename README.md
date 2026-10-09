@@ -11,10 +11,13 @@ own regex engine, and optional live highlighting of every match in the active do
 
 ## Install
 
-1. Build (below) or download `NppSearchReplace.dll` and `NppSearchReplace.Core.dll`.
-2. Create `C:\Program Files\Notepad++\plugins\NppSearchReplace\` and copy both DLLs into it
-   (this needs an elevated prompt).
+1. Download `NppSearchReplace-vX.Y.Z-x64.zip` from the [latest release](https://github.com/johnmerritt72/NppSearchReplace/releases/latest).
+2. Unzip it into `C:\Program Files\Notepad++\plugins\` so that you end up with
+   `C:\Program Files\Notepad++\plugins\NppSearchReplace\NppSearchReplace.dll` and `NppSearchReplace.Core.dll`
+   (Windows will ask for administrator approval).
 3. Restart Notepad++. The panel is under **Plugins > NppSearchReplace > Show Search & Replace Panel** (Ctrl+Alt+F).
+
+Or build from source (below) and copy the two DLLs from `src\NppSearchReplace\bin\Release-x64\` to the same folder.
    From the editor, Ctrl+Alt+F always shows the panel and loads the current single-line selection into the
    search box; pressing it while the panel already has focus hides the panel.
 
