@@ -120,8 +120,8 @@ Scintilla messages directly.
 - `FindNext(text, options)` — target = [selEnd, docEnd]; on miss and Loop,
   target = [0, selEnd]; returns a `SearchResult { Found, Start, End, Wrapped, Error }`.
   A regex compile error is detected by `SCI_SEARCHINTARGET` returning -1 with
-  `SCI_GETSTATUS` set; the engine reads the message, clears the status, and
-  returns it in `Error`.
+  `SCI_GETSTATUS` equal to `SC_STATUS_WARN_REGEX`; the engine clears the status
+  and reports `RegexError`.
 - `FindPrevious` — same but backward: target = [selStart, 0] (Scintilla searches
   backward when target start > end), then wrap target = [docEnd, selStart].
 - `Replace` — if the current selection equals the current match range (re-run
@@ -168,8 +168,9 @@ Regex, DotMatchesNewline, MatchCase, WholeWord, WrapAround, HighlightMatches
 
 ## Error handling
 
-- Invalid regex: status label in red with Boost's message; no dialog; highlight
-  cleared.
+- Invalid regex: status label in red reading "Invalid regular expression"; no
+  dialog; highlight cleared. (Scintilla only exposes a status code,
+  `SC_STATUS_WARN_REGEX`, not Boost's message text.)
 - Empty search text: actions do nothing; status "Enter a search text".
 - Cap hit: highlight what was found; status warns.
 - All Scintilla calls are wrapped so an unexpected exception shows once in the
