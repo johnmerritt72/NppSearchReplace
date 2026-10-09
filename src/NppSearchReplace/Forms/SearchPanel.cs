@@ -35,6 +35,7 @@ namespace NppSearchReplace.Forms
         private SplitContainer _split;
         private MultilineTextBox _searchBox, _replaceBox;
         private Label _statusLabel;
+        private Color _themeFore = SystemColors.ControlText;
 
         public SearchPanel() : base(isModal: false, isDocking: true)
         {
@@ -230,8 +231,14 @@ namespace NppSearchReplace.Forms
                 }
             });
 
-            Color back = BackColor;
-            Color fore = ForeColor;
+            // FormStyle.ApplyStyle sets the form's BackColor to the editor background but leaves the form's
+            // ForeColor at the system default, so derive the text colour the same way it derives the background.
+            Color back;
+            Color fore;
+            GetThemeColors(out back, out fore);
+            ForeColor = fore;
+            _themeFore = fore;
+            _statusLabel.ForeColor = _statusLabel.ForeColor == Color.FromArgb(StatusErrorColor) ? _statusLabel.ForeColor : fore;
             bool lightTheme = back.GetBrightness() > 0.5f;
             Color border = Blend(fore, back, 0.45f);
             // "checked" = a lighter grey on dark themes, a slightly darker grey on light themes
@@ -254,6 +261,26 @@ namespace NppSearchReplace.Forms
                 cb.FlatAppearance.CheckedBackColor = checkedBack;
                 cb.FlatAppearance.MouseOverBackColor = hoverBack;
                 cb.FlatAppearance.MouseDownBackColor = checkedBack;
+            }
+        }
+
+        /// <summary>
+        /// Same decision FormStyle.ApplyStyle makes: editor colours when Notepad++ styling is on and the editor
+        /// background is not near-white, otherwise the system control colours.
+        /// </summary>
+        private static void GetThemeColors(out Color back, out Color fore)
+        {
+            Color editorBack = Npp.notepad.GetDefaultBackgroundColor();
+            bool nearWhite = editorBack.R > 240 && editorBack.G > 240 && editorBack.B > 240;
+            if (Main.settings.use_npp_styling && Npp.nppVersionAtLeast8 && !nearWhite)
+            {
+                back = editorBack;
+                fore = Npp.notepad.GetDefaultForegroundColor();
+            }
+            else
+            {
+                back = SystemColors.Control;
+                fore = SystemColors.ControlText;
             }
         }
 
@@ -503,9 +530,7 @@ namespace NppSearchReplace.Forms
         private void SetStatus(string text, bool isError)
         {
             _statusLabel.Text = text;
-            // FormStyle.ApplyStyle recolours the form after construction (dark themes), so read the
-            // form's current ForeColor instead of a colour captured before styling ran.
-            _statusLabel.ForeColor = isError ? Color.FromArgb(StatusErrorColor) : ForeColor;
+            _statusLabel.ForeColor = isError ? Color.FromArgb(StatusErrorColor) : _themeFore;
         }
 
         /// <summary>Never let an exception escape into Notepad++; show it once and log it.</summary>
