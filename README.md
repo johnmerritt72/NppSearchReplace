@@ -23,10 +23,10 @@ own regex engine, and optional live highlighting of every match in the active do
 | Toggle | Meaning |
 |---|---|
 | Regex | Regular expression search, same syntax as Notepad++'s Find dialog (Boost) |
-| Dot | `.` also matches newline (regex only) |
+| Dot | `.` also matches newline (dimmed and ignored while Regex is off) |
 | Case | Match case |
-| Words | Whole word only (ignored when Regex is on) |
-| Loop | Wrap around at the end or start of the document |
+| Words | Whole word only (dimmed and ignored while Regex is on) |
+| Wrap | Wrap around at the end or start of the document |
 | Highlight | Highlight every match in the active document while you type (capped at 20,000) |
 
 Buttons: Find First, Find Next, Find Prev, Find Last, Replace, Replace All, Count. Find First and

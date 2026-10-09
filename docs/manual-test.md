@@ -20,16 +20,16 @@ café apple
 - [ ] The history ▾ is a small button at the top-right corner of each box, not a full-height bar.
 
 ## Searching
-- [ ] `apple`, Loop on: three Ctrl+Enter presses select each occurrence, the fourth reports `Wrapped (line 1)`.
-- [ ] Loop off at the last match: `No more matches`.
-- [ ] Find First selects the first `apple` (line 1) from anywhere; Find Last selects the last `apple` (line 3) from anywhere, both with Loop off.
+- [ ] `apple`, Wrap on: three Ctrl+Enter presses select each occurrence, the fourth reports `Wrapped (line 1)`.
+- [ ] Wrap off at the last match: `No more matches`.
+- [ ] Find First selects the first `apple` (line 1) from anywhere; Find Last selects the last `apple` (line 3) from anywhere, both with Wrap off.
 - [ ] Case off finds `banana` and `Banana`; Case on finds only `banana`.
 - [ ] Words on: `app` finds nothing; `apple` finds three.
 - [ ] `café apple` (non-ASCII) is found with the selection exactly covering it; `apple` on line 3 is selected without a one-byte shift.
 - [ ] Multiline literal `apple⏎Banana` matches across the line break in both Windows and Unix EOL documents.
 - [ ] Regex `(ap)(ple)` with replacement `$2$1`: Replace gives `pleap`; Replace All reports `Replaced N`; one Ctrl+Z undoes all.
 - [ ] Regex `(` shows red `Invalid regular expression`, no message box.
-- [ ] Dot enabled only with Regex on; Words enabled only with Regex off. Regex `a.b` with Dot on matches across a newline.
+- [ ] Dot text is dimmed while Regex is off and Words is dimmed while Regex is on; both still show a tooltip saying so. Regex `a.b` with Dot on matches across a newline.
 - [ ] Count reports `3 matches` and leaves the selection alone.
 - [ ] Replace with a selection that is not a match does not change text and just finds next.
 

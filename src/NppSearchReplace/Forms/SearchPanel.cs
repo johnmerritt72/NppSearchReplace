@@ -97,7 +97,7 @@ namespace NppSearchReplace.Forms
             _dotToggle = MakeToggle("Dot", "'.' also matches newline (regex only)");
             _caseToggle = MakeToggle("Case", "Match case");
             _wordsToggle = MakeToggle("Words", "Whole word only (ignored when Regex is on)");
-            _loopToggle = MakeToggle("Loop", "Wrap around at the end or start of the document");
+            _loopToggle = MakeToggle("Wrap", "Wrap around at the end or start of the document");
             _highlightToggle = MakeToggle("Highlight", "Highlight every match in the document while typing");
             toolbar.Controls.AddRange(new Control[]
             {
@@ -125,8 +125,7 @@ namespace NppSearchReplace.Forms
             root.Controls.Add(_statusLabel, 0, 2);
             Controls.Add(root);
 
-            _regexToggle.CheckedChanged += (s, e) => { _dotToggle.Enabled = _regexToggle.Checked; _wordsToggle.Enabled = !_regexToggle.Checked; };
-            _dotToggle.Enabled = false;
+            _regexToggle.CheckedChanged += (s, e) => UpdateToggleApplicability();
             _searchBox.TextChanged += (s, e) => ScheduleHighlight();
             foreach (CheckBox toggle in new[] { _regexToggle, _dotToggle, _caseToggle, _wordsToggle })
                 toggle.CheckedChanged += (s, e) => ScheduleHighlight();
@@ -135,42 +134,66 @@ namespace NppSearchReplace.Forms
         }
 
         private const int ToolbarButtonHeight = 22;
+        private const int ToolbarButtonTextPadding = 16;
+        private readonly ToolTip _toolTip = new ToolTip();
 
-        private static CheckBox MakeToggle(string text, string tip)
+        private CheckBox MakeToggle(string text, string tip)
         {
             var cb = new CheckBox
             {
                 Text = text,
                 Appearance = Appearance.Button,
                 FlatStyle = FlatStyle.Flat,
-                AutoSize = true,
-                MinimumSize = new Size(0, ToolbarButtonHeight),
-                Padding = new Padding(4, 0, 4, 0),
+                AutoSize = false,
                 TextAlign = ContentAlignment.MiddleCenter,
                 Margin = new Padding(0, 0, 3, 0),
                 TabStop = false,
             };
             cb.FlatAppearance.BorderSize = 1;
-            new ToolTip().SetToolTip(cb, tip);
+            FitToText(cb);
+            _toolTip.SetToolTip(cb, tip);
             return cb;
         }
 
-        private static Button MakeButton(string text, string tip, EventHandler onClick)
+        private Button MakeButton(string text, string tip, EventHandler onClick)
         {
             var b = new Button
             {
                 Text = text,
                 FlatStyle = FlatStyle.Flat,
-                AutoSize = true,
-                MinimumSize = new Size(0, ToolbarButtonHeight),
-                Padding = new Padding(4, 0, 4, 0),
+                AutoSize = false,
                 Margin = new Padding(0, 0, 3, 0),
                 TabStop = false,
             };
             b.FlatAppearance.BorderSize = 1;
-            new ToolTip().SetToolTip(b, tip);
+            FitToText(b);
+            _toolTip.SetToolTip(b, tip);
             b.Click += onClick;
             return b;
+        }
+
+        /// <summary>
+        /// Flat-style CheckBoxes with Appearance.Button auto-size too narrow and clip their text, so size
+        /// every toolbar button explicitly from the measured text width.
+        /// </summary>
+        private void FitToText(ButtonBase b)
+        {
+            Size text = TextRenderer.MeasureText(b.Text, Font);
+            b.Size = new Size(text.Width + ToolbarButtonTextPadding, ToolbarButtonHeight);
+        }
+
+        /// <summary>
+        /// Words only applies without Regex and Dot only with it. Rather than disabling the toggle (grey text
+        /// that ignores the theme, and no tooltip), keep it clickable but dim its text and say so in the tip.
+        /// </summary>
+        private void UpdateToggleApplicability()
+        {
+            bool regex = _regexToggle.Checked;
+            Color dim = Blend(_themeFore, BackColor, 0.5f);
+            _wordsToggle.ForeColor = regex ? dim : _themeFore;
+            _dotToggle.ForeColor = regex ? _themeFore : dim;
+            _toolTip.SetToolTip(_wordsToggle, "Whole word only" + (regex ? " (ignored while Regex is on)" : ""));
+            _toolTip.SetToolTip(_dotToggle, "'.' also matches newline" + (regex ? "" : " (only applies when Regex is on)"));
         }
 
         /// <summary>A narrow right-hand strip beside a text box that holds one small button at its top.</summary>
@@ -186,7 +209,7 @@ namespace NppSearchReplace.Forms
         {
             var b = new Button { Text = "▾", Size = new Size(18, 18), FlatStyle = FlatStyle.Flat, TabStop = false, Margin = new Padding(0), Padding = new Padding(0) };
             b.FlatAppearance.BorderSize = 1;
-            new ToolTip().SetToolTip(b, "Recent entries");
+            _toolTip.SetToolTip(b, "Recent entries");
             b.Click += (s, e) =>
             {
                 var menu = new ContextMenuStrip();
@@ -262,6 +285,7 @@ namespace NppSearchReplace.Forms
                 cb.FlatAppearance.MouseOverBackColor = hoverBack;
                 cb.FlatAppearance.MouseDownBackColor = checkedBack;
             }
+            UpdateToggleApplicability();
         }
 
         /// <summary>
@@ -569,8 +593,7 @@ namespace NppSearchReplace.Forms
             _wordsToggle.Checked = s.whole_word;
             _loopToggle.Checked = s.wrap_around;
             _highlightToggle.Checked = s.highlight_matches;
-            _dotToggle.Enabled = s.use_regex;
-            _wordsToggle.Enabled = !s.use_regex;
+            UpdateToggleApplicability();
         }
 
         public void SaveOptionsToSettings()
