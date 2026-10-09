@@ -24,6 +24,10 @@ namespace NppSearchReplace.Forms
         private bool _suppressModifiedNotifications;
         private const int ScModInsertText = 0x1;
         private const int ScModDeleteText = 0x2;
+        private static readonly string HistoryPath = Path.Combine(Main.PluginConfigDirectory, "history.xml");
+        private SearchHistory _history = SearchHistory.Load(HistoryPath);
+        private Button _searchHistoryButton, _replaceHistoryButton;
+        private bool _splitterApplied;
 
         private CheckBox _regexToggle, _dotToggle, _caseToggle, _wordsToggle, _loopToggle, _highlightToggle;
         private Button _findNextButton, _findPrevButton, _replaceButton, _replaceAllButton, _countButton;
@@ -99,8 +103,13 @@ namespace NppSearchReplace.Forms
             _split = new SplitContainer { Dock = DockStyle.Fill, Orientation = Orientation.Vertical, SplitterWidth = 6, Margin = new Padding(0, 2, 0, 2) };
             _searchBox = MakeBox();
             _replaceBox = MakeBox();
+            _searchHistoryButton = MakeHistoryButton(() => _history.SearchTexts, _searchBox);
+            _replaceHistoryButton = MakeHistoryButton(() => _history.ReplaceTexts, _replaceBox);
+            // Fill-docked boxes must be added before the Right-docked buttons or the button gets covered.
             _split.Panel1.Controls.Add(_searchBox);
+            _split.Panel1.Controls.Add(_searchHistoryButton);
             _split.Panel2.Controls.Add(_replaceBox);
+            _split.Panel2.Controls.Add(_replaceHistoryButton);
 
             _statusLabel = new Label { Dock = DockStyle.Fill, AutoSize = true, Text = "Enter a search text", Margin = new Padding(2, 0, 0, 0) };
             _statusDefaultColor = _statusLabel.ForeColor;
@@ -144,6 +153,30 @@ namespace NppSearchReplace.Forms
             return b;
         }
 
+        private Button MakeHistoryButton(Func<System.Collections.Generic.List<string>> entries, MultilineTextBox box)
+        {
+            var b = new Button { Text = "▾", Dock = DockStyle.Right, Width = 18, TabStop = false, Margin = new Padding(0) };
+            new ToolTip().SetToolTip(b, "Recent entries");
+            b.Click += (s, e) =>
+            {
+                var menu = new ContextMenuStrip();
+                foreach (string entry in entries())
+                {
+                    string captured = entry;
+                    menu.Items.Add(SearchHistory.ToDisplayLine(captured, 60), null, (s2, e2) =>
+                    {
+                        box.Text = captured;
+                        box.SelectAll();
+                        box.Focus();
+                    });
+                }
+                if (menu.Items.Count == 0)
+                    menu.Items.Add(new ToolStripMenuItem("(no history)") { Enabled = false });
+                menu.Show(b, new Point(0, b.Height));
+            };
+            return b;
+        }
+
         private MultilineTextBox MakeBox()
         {
             var box = new MultilineTextBox { Dock = DockStyle.Fill, Font = new Font(FontFamily.GenericMonospace, 10f) };
@@ -178,9 +211,14 @@ namespace NppSearchReplace.Forms
         {
             base.OnVisibleChanged(e);
             if (Visible)
+            {
+                ApplySplitterFromSettings();
                 ScheduleHighlight();
+            }
             else
+            {
                 Guarded(ClearHighlights);
+            }
         }
 
         #endregion
@@ -290,18 +328,30 @@ namespace NppSearchReplace.Forms
 
         #region actions
 
-        private void DoFindNext() => Guarded(() => ReportFind(_engine.FindNext(SearchText, CurrentOptions)));
+        private void DoFindNext() => Guarded(() =>
+        {
+            _history.PushSearch(SearchText);
+            ReportFind(_engine.FindNext(SearchText, CurrentOptions));
+        });
 
-        private void DoFindPrevious() => Guarded(() => ReportFind(_engine.FindPrevious(SearchText, CurrentOptions)));
+        private void DoFindPrevious() => Guarded(() =>
+        {
+            _history.PushSearch(SearchText);
+            ReportFind(_engine.FindPrevious(SearchText, CurrentOptions));
+        });
 
         private void DoReplace() => Guarded(() =>
         {
+            _history.PushSearch(SearchText);
+            _history.PushReplace(ReplaceText);
             ReplaceResult r = _engine.Replace(SearchText, ReplaceText, CurrentOptions);
             ReportFind(r.Next, r.Replaced ? "Replaced; " : "");
         });
 
         private void DoReplaceAll() => Guarded(() =>
         {
+            _history.PushSearch(SearchText);
+            _history.PushReplace(ReplaceText);
             _suppressModifiedNotifications = true;
             ReplaceAllResult r;
             try
@@ -321,6 +371,7 @@ namespace NppSearchReplace.Forms
 
         private void DoCount() => Guarded(() =>
         {
+            _history.PushSearch(SearchText);
             CountResult r = _engine.Count(SearchText, CurrentOptions, 1000000);
             if (r.EmptyPattern) SetStatus("Enter a search text", false);
             else if (r.TooLarge) SetStatus("Document too large (over 2 GB)", true);
@@ -393,6 +444,32 @@ namespace NppSearchReplace.Forms
             s.whole_word = _wordsToggle.Checked;
             s.wrap_around = _loopToggle.Checked;
             s.highlight_matches = _highlightToggle.Checked;
+        }
+
+        /// <summary>Applied once, the first time the panel has a real width; later drags are the user's.</summary>
+        private void ApplySplitterFromSettings()
+        {
+            if (_splitterApplied || _split.Width <= 0)
+                return;
+            int percent = Math.Max(10, Math.Min(90, Main.settings.splitter_percent));
+            _split.SplitterDistance = Math.Max(_split.Panel1MinSize, _split.Width * percent / 100);
+            _splitterApplied = true;
+        }
+
+        /// <summary>Options, splitter position and history, all in one call. Settings are saved by Main.</summary>
+        public void SaveState()
+        {
+            SaveOptionsToSettings();
+            if (_split.Width > 0)
+                Main.settings.splitter_percent = Math.Max(10, Math.Min(90, _split.SplitterDistance * 100 / _split.Width));
+            try
+            {
+                _history.Save(HistoryPath);
+            }
+            catch (Exception)
+            {
+                // history is a convenience; never block shutdown over it
+            }
         }
 
         #endregion

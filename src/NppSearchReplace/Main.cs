@@ -78,7 +78,7 @@ namespace Kbg.NppPluginNET
         {
             isShuttingDown = true;
             if (searchPanel != null && !searchPanel.IsDisposed)
-                searchPanel.SaveOptionsToSettings();
+                searchPanel.SaveState();
             settings.SaveToIniFile();
             if (searchPanel != null && !searchPanel.IsDisposed)
             {
@@ -137,17 +137,22 @@ namespace Kbg.NppPluginNET
             if (searchPanel != null && !searchPanel.IsDisposed)
             {
                 searchPanel.ClearHighlights();
+                searchPanel.SaveState();
                 Npp.notepad.HideDockingForm(searchPanel);
             }
             settings.panel_visible = false;
             SetPanelMenuCheck(false);
+            settings.SaveToIniFile();
         }
 
         /// <summary>Called by the panel when the user closes it with the docking X button.</summary>
         public static void OnPanelClosedByUser()
         {
+            if (searchPanel != null && !searchPanel.IsDisposed)
+                searchPanel.SaveState();
             settings.panel_visible = false;
             SetPanelMenuCheck(false);
+            settings.SaveToIniFile();
         }
 
         private static void SetPanelMenuCheck(bool isChecked)
