@@ -30,7 +30,7 @@ own regex engine, and optional live highlighting of every match in the active do
 | Highlight | Highlight every match in the active document while you type (capped at 20,000) |
 
 Buttons: Find First, Find Next, Find Prev, Find Last, Replace, Replace All, Count. Find First and
-Find Last jump to the first or last match in the document regardless of the caret or Loop.
+Find Last jump to the first or last match in the document regardless of the caret or Wrap.
 
 | Key (inside either box) | Action |
 |---|---|
