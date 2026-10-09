@@ -82,6 +82,7 @@
     <Compile Include="PluginInfrastructure\Win32.cs" />
     <Compile Include="PluginInfrastructure\resource_h.cs" />
     <Compile Include="Main.cs" />
+    <Compile Include="Search\ScintillaEditorTarget.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\FormStyle.cs" />
     <Compile Include="Utils\ArrayExtensions.cs" />

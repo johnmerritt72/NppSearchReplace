@@ -50,7 +50,10 @@ namespace Kbg.NppPluginNET
             {
             case (uint)NppMsg.NPPN_READY:
                 if (settings.panel_visible)
+                {
                     ShowSearchPanel();
+                    Npp.editor.GrabFocus();
+                }
                 break;
             case (uint)NppMsg.NPPN_WORDSTYLESUPDATED:
                 RestyleEverything();
@@ -64,6 +67,8 @@ namespace Kbg.NppPluginNET
         static internal void PluginCleanUp()
         {
             isShuttingDown = true;
+            if (searchPanel != null && !searchPanel.IsDisposed)
+                searchPanel.SaveOptionsToSettings();
             settings.SaveToIniFile();
             if (searchPanel != null && !searchPanel.IsDisposed)
             {
@@ -111,6 +116,9 @@ namespace Kbg.NppPluginNET
             Npp.notepad.ShowDockingForm(searchPanel);
             settings.panel_visible = true;
             SetPanelMenuCheck(true);
+            string selection = Npp.editor.GetSelText();
+            bool singleLine = selection.IndexOf('\n') < 0 && selection.IndexOf('\r') < 0;
+            searchPanel.FocusSearchBox(singleLine ? selection : null);
         }
 
         public static void HideSearchPanel()
