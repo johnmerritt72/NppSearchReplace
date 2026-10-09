@@ -79,3 +79,15 @@ account Modify rights on that one folder makes every later build install automat
 ## Not in this version
 
 Multi-file search, search in selection, bookmarks, and EditPad's Free-spacing/Adapt/Line/Invert modes.
+
+## Licence and credits
+
+NppSearchReplace is released under the [MIT License](LICENSE).
+
+The Notepad++ plugin infrastructure in `src/NppSearchReplace` (the `PluginInfrastructure`, `JSON_Tools`
+and `Utils` folders, `FormBase` and `NppFormHelper`, and the project file) is derived from
+[NppCSharpPluginPack](https://github.com/molsonkiko/NppCSharpPluginPack) by Mark J. Olson, which is in turn
+based on [NotepadPlusPlusPluginPack.Net](https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net) by
+Kasper B. Graversen. Those portions remain under the Apache License, Version 2.0; the full licence text and
+copyright notices are in [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md). Thank you to both authors,
+without whom writing a Notepad++ plugin in C# would be a much larger job.
