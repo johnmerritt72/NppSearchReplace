@@ -59,6 +59,9 @@
       <DependentUpon>FormBase.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\NppFormHelper.cs" />
+    <Compile Include="Forms\MultilineTextBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Forms\SearchPanel.cs">
       <SubType>Form</SubType>
     </Compile>

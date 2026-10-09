@@ -78,7 +78,7 @@ namespace NppSearchReplace.Forms
         /// This adds KeyUp, KeyDown, and KeyPress event handlers to all controls according to the recommendations in NppFormHelper.
         /// </summary>
         /// <param name="ctrl"></param>
-        private void AddKeyUpDownPressHandlers(Control ctrl = null)
+        protected virtual void AddKeyUpDownPressHandlers(Control ctrl = null)
         {
             if (ctrl is null)
                 ctrl = this;
@@ -146,6 +146,7 @@ namespace NppSearchReplace.Forms
                             RemoveControlParent(this);
                             break;
                         case DockMgrMsg.DMN_CLOSE:  // we are being closed
+                            OnDockingPanelClosed();
                             break;
                         }
                     }
@@ -153,6 +154,11 @@ namespace NppSearchReplace.Forms
                 }
             }
             base.WndProc(ref m);
+        }
+
+        /// <summary>Called when the user closes a docked panel with its X button.</summary>
+        protected virtual void OnDockingPanelClosed()
+        {
         }
 
         private void RemoveControlParent(Control parent)
