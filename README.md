@@ -15,6 +15,8 @@ own regex engine, and optional live highlighting of every match in the active do
 2. Create `C:\Program Files\Notepad++\plugins\NppSearchReplace\` and copy both DLLs into it
    (this needs an elevated prompt).
 3. Restart Notepad++. The panel is under **Plugins > NppSearchReplace > Show Search & Replace Panel** (Ctrl+Alt+F).
+   From the editor, Ctrl+Alt+F always shows the panel and loads the current single-line selection into the
+   search box; pressing it while the panel already has focus hides the panel.
 
 ## Using the panel
 
@@ -47,13 +49,15 @@ position, panel visibility and history are remembered between sessions in
 Requires Visual Studio 2022 (MSBuild) and the .NET SDK.
 
 ```powershell
-# plugin (x64 only)
-& "C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe" src\NppSearchReplace\NppSearchReplace.csproj /t:Restore
-& "C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe" src\NppSearchReplace\NppSearchReplace.csproj /p:Configuration=Release /p:Platform=x64
+# whole solution (plugin is x64 only; MSBuild.exe is under your Visual Studio install, or on PATH in a Developer PowerShell)
+msbuild NppSearchReplace.sln /t:Restore
+msbuild NppSearchReplace.sln /p:Configuration=Release /p:Platform=x64
 
 # unit tests for the search logic
 dotnet test tests\NppSearchReplace.Core.Tests
 ```
+
+Opening `NppSearchReplace.sln` in Visual Studio 2022 and choosing the x64 platform works too.
 
 Output lands in `src\NppSearchReplace\bin\Release-x64\`. The build also tries to copy the DLLs into
 `%ProgramFiles%\Notepad++\plugins\NppSearchReplace\`; that step is skipped with a warning when the

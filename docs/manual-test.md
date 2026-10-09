@@ -9,8 +9,9 @@ café apple
 ```
 
 ## Panel and keys
-- [ ] Ctrl+Alt+F opens the panel docked at the bottom; the search box has focus; Ctrl+Alt+F again hides it.
-- [ ] Selecting a word in the editor then Ctrl+Alt+F pre-fills the search box with it. A multi-line selection does not.
+- [ ] Ctrl+Alt+F opens the panel docked at the bottom; the search box has focus; Ctrl+Alt+F again (focus still in the panel) hides it.
+- [ ] With the panel open, click into the editor, select a word, press Ctrl+Alt+F: the panel stays open and the word is loaded into the search box. A multi-line selection is not loaded.
+- [ ] Settings > Preferences > Dark Mode on: the status text in the panel stays readable (not black on dark).
 - [ ] Enter inserts a newline in either box; Ctrl+Enter / Ctrl+Shift+Enter navigate; Tab switches boxes; Escape focuses the editor.
 - [ ] Ctrl+C / Ctrl+V / Ctrl+A work inside the boxes.
 

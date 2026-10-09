@@ -34,7 +34,6 @@ namespace NppSearchReplace.Forms
         private SplitContainer _split;
         private MultilineTextBox _searchBox, _replaceBox;
         private Label _statusLabel;
-        private Color _statusDefaultColor;
 
         public SearchPanel() : base(isModal: false, isDocking: true)
         {
@@ -112,7 +111,6 @@ namespace NppSearchReplace.Forms
             _split.Panel2.Controls.Add(_replaceHistoryButton);
 
             _statusLabel = new Label { Dock = DockStyle.Fill, AutoSize = true, Text = "Enter a search text", Margin = new Padding(2, 0, 0, 0) };
-            _statusDefaultColor = _statusLabel.ForeColor;
 
             root.Controls.Add(optionsRow, 0, 0);
             root.Controls.Add(actionsRow, 0, 1);
@@ -392,7 +390,9 @@ namespace NppSearchReplace.Forms
         private void SetStatus(string text, bool isError)
         {
             _statusLabel.Text = text;
-            _statusLabel.ForeColor = isError ? Color.FromArgb(StatusErrorColor) : _statusDefaultColor;
+            // FormStyle.ApplyStyle recolours the form after construction (dark themes), so read the
+            // form's current ForeColor instead of a colour captured before styling ran.
+            _statusLabel.ForeColor = isError ? Color.FromArgb(StatusErrorColor) : ForeColor;
         }
 
         /// <summary>Never let an exception escape into Notepad++; show it once and log it.</summary>

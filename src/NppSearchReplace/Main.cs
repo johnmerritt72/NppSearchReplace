@@ -108,10 +108,14 @@ namespace Kbg.NppPluginNET
                 "About NppSearchReplace", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
+        /// <summary>
+        /// Menu command / Ctrl+Alt+F. From the editor it always shows the panel and loads the selection into
+        /// the search box; only when the keyboard focus is already inside the panel does it hide the panel.
+        /// </summary>
         public static void ToggleSearchPanel()
         {
             bool visible = searchPanel != null && !searchPanel.IsDisposed && searchPanel.Visible;
-            if (visible)
+            if (visible && searchPanel.ContainsFocus)
                 HideSearchPanel();
             else
                 ShowSearchPanel();
