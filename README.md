@@ -29,6 +29,9 @@ own regex engine, and optional live highlighting of every match in the active do
 | Loop | Wrap around at the end or start of the document |
 | Highlight | Highlight every match in the active document while you type (capped at 20,000) |
 
+Buttons: Find First, Find Next, Find Prev, Find Last, Replace, Replace All, Count. Find First and
+Find Last jump to the first or last match in the document regardless of the caret or Loop.
+
 | Key (inside either box) | Action |
 |---|---|
 | Enter | New line in the box |
@@ -40,7 +43,8 @@ own regex engine, and optional live highlighting of every match in the active do
 | Tab | Switch between the search and replacement boxes |
 | Escape | Return focus to the editor |
 
-The small ▾ button beside each box lists the last 20 entries. Toggles, highlight state, splitter
+The search and replacement boxes use the editor's Global default font from Style Configurator.
+The small ▾ button at the top-right of each box lists the last 20 entries. Toggles, highlight state, splitter
 position, panel visibility and history are remembered between sessions in
 `%AppData%\Notepad++\plugins\config\NppSearchReplace\`.
 

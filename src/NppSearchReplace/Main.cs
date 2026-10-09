@@ -91,7 +91,10 @@ namespace Kbg.NppPluginNET
         public static void RestyleEverything()
         {
             if (searchPanel != null && !searchPanel.IsDisposed)
+            {
                 FormStyle.ApplyStyle(searchPanel, settings.use_npp_styling);
+                searchPanel.Restyle();
+            }
         }
 
         static void OpenSettings()

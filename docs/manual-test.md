@@ -14,10 +14,15 @@ café apple
 - [ ] Settings > Preferences > Dark Mode on: the status text in the panel stays readable (not black on dark).
 - [ ] Enter inserts a newline in either box; Ctrl+Enter / Ctrl+Shift+Enter navigate; Tab switches boxes; Escape focuses the editor.
 - [ ] Ctrl+C / Ctrl+V / Ctrl+A work inside the boxes.
+- [ ] The boxes use the editor's Global default font (Style Configurator); changing it there updates the boxes without a restart.
+- [ ] Buttons and toggles are flat with a thin border; a checked toggle shows a lighter grey (dark theme) or slightly darker grey (light theme) background, no blue border.
+- [ ] All buttons and toggles sit on one row with a gap between the two groups; narrowing the panel wraps the row instead of clipping it.
+- [ ] The history ▾ is a small button at the top-right corner of each box, not a full-height bar.
 
 ## Searching
 - [ ] `apple`, Loop on: three Ctrl+Enter presses select each occurrence, the fourth reports `Wrapped (line 1)`.
 - [ ] Loop off at the last match: `No more matches`.
+- [ ] Find First selects the first `apple` (line 1) from anywhere; Find Last selects the last `apple` (line 3) from anywhere, both with Loop off.
 - [ ] Case off finds `banana` and `Banana`; Case on finds only `banana`.
 - [ ] Words on: `app` finds nothing; `apple` finds three.
 - [ ] `café apple` (non-ASCII) is found with the selection exactly covering it; `apple` on line 3 is selected without a one-byte shift.

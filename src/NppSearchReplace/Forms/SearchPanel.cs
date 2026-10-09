@@ -3,6 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 using Kbg.NppPluginNET;
+using Kbg.NppPluginNET.PluginInfrastructure;
 using NppSearchReplace.Core;
 using NppSearchReplace.Search;
 using NppSearchReplace.Utils;
@@ -30,7 +31,7 @@ namespace NppSearchReplace.Forms
         private bool _splitterApplied;
 
         private CheckBox _regexToggle, _dotToggle, _caseToggle, _wordsToggle, _loopToggle, _highlightToggle;
-        private Button _findNextButton, _findPrevButton, _replaceButton, _replaceAllButton, _countButton;
+        private Button _findFirstButton, _findNextButton, _findPrevButton, _findLastButton, _replaceButton, _replaceAllButton, _countButton;
         private SplitContainer _split;
         private MultilineTextBox _searchBox, _replaceBox;
         private Label _statusLabel;
@@ -76,46 +77,51 @@ namespace NppSearchReplace.Forms
             ClientSize = new Size(900, 180);
             Font = SystemFonts.MessageBoxFont;
 
-            var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Padding = new Padding(4, 2, 4, 2) };
-            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(4, 2, 4, 2) };
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-            var optionsRow = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, WrapContents = false, Margin = new Padding(0) };
+            // One row: action buttons, a gap, then the option toggles. Wraps when the panel is narrow.
+            var toolbar = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = true, Margin = new Padding(0) };
+            _findFirstButton = MakeButton("Find First", "First match in the document", (s, e) => DoFindFirst());
+            _findNextButton = MakeButton("Find Next", "Ctrl+Enter", (s, e) => DoFindNext());
+            _findPrevButton = MakeButton("Find Prev", "Ctrl+Shift+Enter", (s, e) => DoFindPrevious());
+            _findLastButton = MakeButton("Find Last", "Last match in the document", (s, e) => DoFindLast());
+            _replaceButton = MakeButton("Replace", "Ctrl+R", (s, e) => DoReplace());
+            _replaceAllButton = MakeButton("Replace All", "Ctrl+Shift+R", (s, e) => DoReplaceAll());
+            _countButton = MakeButton("Count", "Ctrl+Shift+C", (s, e) => DoCount());
+            var gap = new Panel { Width = 14, Height = 1, Margin = new Padding(0) };
             _regexToggle = MakeToggle("Regex", "Regular expression search (Notepad++ / Boost syntax)");
             _dotToggle = MakeToggle("Dot", "'.' also matches newline (regex only)");
             _caseToggle = MakeToggle("Case", "Match case");
             _wordsToggle = MakeToggle("Words", "Whole word only (ignored when Regex is on)");
             _loopToggle = MakeToggle("Loop", "Wrap around at the end or start of the document");
             _highlightToggle = MakeToggle("Highlight", "Highlight every match in the document while typing");
-            optionsRow.Controls.AddRange(new Control[] { _regexToggle, _dotToggle, _caseToggle, _wordsToggle, _loopToggle, _highlightToggle });
-
-            var actionsRow = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, WrapContents = false, Margin = new Padding(0) };
-            _findNextButton = MakeButton("Find Next", "Ctrl+Enter", (s, e) => DoFindNext());
-            _findPrevButton = MakeButton("Find Prev", "Ctrl+Shift+Enter", (s, e) => DoFindPrevious());
-            _replaceButton = MakeButton("Replace", "Ctrl+R", (s, e) => DoReplace());
-            _replaceAllButton = MakeButton("Replace All", "Ctrl+Shift+R", (s, e) => DoReplaceAll());
-            _countButton = MakeButton("Count", "Ctrl+Shift+C", (s, e) => DoCount());
-            actionsRow.Controls.AddRange(new Control[] { _findNextButton, _findPrevButton, _replaceButton, _replaceAllButton, _countButton });
+            toolbar.Controls.AddRange(new Control[]
+            {
+                _findFirstButton, _findNextButton, _findPrevButton, _findLastButton, _replaceButton, _replaceAllButton, _countButton,
+                gap,
+                _regexToggle, _dotToggle, _caseToggle, _wordsToggle, _loopToggle, _highlightToggle,
+            });
 
             _split = new SplitContainer { Dock = DockStyle.Fill, Orientation = Orientation.Vertical, SplitterWidth = 6, Margin = new Padding(0, 2, 0, 2) };
             _searchBox = MakeBox();
             _replaceBox = MakeBox();
             _searchHistoryButton = MakeHistoryButton(() => _history.SearchTexts, _searchBox);
             _replaceHistoryButton = MakeHistoryButton(() => _history.ReplaceTexts, _replaceBox);
-            // Fill-docked boxes must be added before the Right-docked buttons or the button gets covered.
+            // Each box sits beside a narrow gutter that holds the small history button at its top.
+            // Fill-docked boxes must be added before the Right-docked gutters or the gutter gets covered.
             _split.Panel1.Controls.Add(_searchBox);
-            _split.Panel1.Controls.Add(_searchHistoryButton);
+            _split.Panel1.Controls.Add(MakeGutter(_searchHistoryButton));
             _split.Panel2.Controls.Add(_replaceBox);
-            _split.Panel2.Controls.Add(_replaceHistoryButton);
+            _split.Panel2.Controls.Add(MakeGutter(_replaceHistoryButton));
 
             _statusLabel = new Label { Dock = DockStyle.Fill, AutoSize = true, Text = "Enter a search text", Margin = new Padding(2, 0, 0, 0) };
 
-            root.Controls.Add(optionsRow, 0, 0);
-            root.Controls.Add(actionsRow, 0, 1);
-            root.Controls.Add(_split, 0, 2);
-            root.Controls.Add(_statusLabel, 0, 3);
+            root.Controls.Add(toolbar, 0, 0);
+            root.Controls.Add(_split, 0, 1);
+            root.Controls.Add(_statusLabel, 0, 2);
             Controls.Add(root);
 
             _regexToggle.CheckedChanged += (s, e) => { _dotToggle.Enabled = _regexToggle.Checked; _wordsToggle.Enabled = !_regexToggle.Checked; };
@@ -127,33 +133,58 @@ namespace NppSearchReplace.Forms
             ResumeLayout(true);
         }
 
+        private const int ToolbarButtonHeight = 22;
+
         private static CheckBox MakeToggle(string text, string tip)
         {
             var cb = new CheckBox
             {
                 Text = text,
                 Appearance = Appearance.Button,
+                FlatStyle = FlatStyle.Flat,
                 AutoSize = true,
-                MinimumSize = new Size(54, 24),
+                MinimumSize = new Size(0, ToolbarButtonHeight),
+                Padding = new Padding(4, 0, 4, 0),
                 TextAlign = ContentAlignment.MiddleCenter,
                 Margin = new Padding(0, 0, 3, 0),
                 TabStop = false,
             };
+            cb.FlatAppearance.BorderSize = 1;
             new ToolTip().SetToolTip(cb, tip);
             return cb;
         }
 
-        private static Button MakeButton(string text, string shortcut, EventHandler onClick)
+        private static Button MakeButton(string text, string tip, EventHandler onClick)
         {
-            var b = new Button { Text = text, AutoSize = true, MinimumSize = new Size(78, 24), Margin = new Padding(0, 0, 3, 0), TabStop = false };
-            new ToolTip().SetToolTip(b, shortcut);
+            var b = new Button
+            {
+                Text = text,
+                FlatStyle = FlatStyle.Flat,
+                AutoSize = true,
+                MinimumSize = new Size(0, ToolbarButtonHeight),
+                Padding = new Padding(4, 0, 4, 0),
+                Margin = new Padding(0, 0, 3, 0),
+                TabStop = false,
+            };
+            b.FlatAppearance.BorderSize = 1;
+            new ToolTip().SetToolTip(b, tip);
             b.Click += onClick;
             return b;
         }
 
+        /// <summary>A narrow right-hand strip beside a text box that holds one small button at its top.</summary>
+        private static Panel MakeGutter(Button button)
+        {
+            var gutter = new Panel { Dock = DockStyle.Right, Width = 18, Margin = new Padding(0) };
+            button.Location = new Point(0, 0);
+            gutter.Controls.Add(button);
+            return gutter;
+        }
+
         private Button MakeHistoryButton(Func<System.Collections.Generic.List<string>> entries, MultilineTextBox box)
         {
-            var b = new Button { Text = "▾", Dock = DockStyle.Right, Width = 18, TabStop = false, Margin = new Padding(0) };
+            var b = new Button { Text = "▾", Size = new Size(18, 18), FlatStyle = FlatStyle.Flat, TabStop = false, Margin = new Padding(0), Padding = new Padding(0) };
+            b.FlatAppearance.BorderSize = 1;
             new ToolTip().SetToolTip(b, "Recent entries");
             b.Click += (s, e) =>
             {
@@ -180,6 +211,75 @@ namespace NppSearchReplace.Forms
             var box = new MultilineTextBox { Dock = DockStyle.Fill, Font = new Font(FontFamily.GenericMonospace, 10f) };
             box.KeyDown += Box_KeyDown;
             return box;
+        }
+
+        /// <summary>
+        /// Re-apply everything that depends on the editor's current theme: the boxes use the editor's default
+        /// style font, and the flat toolbar buttons take their colours from the (already styled) panel colours.
+        /// Called after FormStyle.ApplyStyle has run, on first show and on NPPN_WORDSTYLESUPDATED.
+        /// </summary>
+        public void Restyle()
+        {
+            Guarded(() =>
+            {
+                Font editorFont = ReadEditorFont();
+                if (editorFont != null)
+                {
+                    _searchBox.Font = editorFont;
+                    _replaceBox.Font = editorFont;
+                }
+            });
+
+            Color back = BackColor;
+            Color fore = ForeColor;
+            bool lightTheme = back.GetBrightness() > 0.5f;
+            Color border = Blend(fore, back, 0.45f);
+            // "checked" = a lighter grey on dark themes, a slightly darker grey on light themes
+            Color checkedBack = lightTheme ? Blend(back, Color.Black, 0.12f) : Blend(back, Color.White, 0.22f);
+            Color hoverBack = lightTheme ? Blend(back, Color.Black, 0.06f) : Blend(back, Color.White, 0.10f);
+
+            foreach (Button b in new[] { _findFirstButton, _findNextButton, _findPrevButton, _findLastButton, _replaceButton, _replaceAllButton, _countButton, _searchHistoryButton, _replaceHistoryButton })
+            {
+                b.BackColor = back;
+                b.ForeColor = fore;
+                b.FlatAppearance.BorderColor = border;
+                b.FlatAppearance.MouseOverBackColor = hoverBack;
+                b.FlatAppearance.MouseDownBackColor = checkedBack;
+            }
+            foreach (CheckBox cb in new[] { _regexToggle, _dotToggle, _caseToggle, _wordsToggle, _loopToggle, _highlightToggle })
+            {
+                cb.BackColor = back;
+                cb.ForeColor = fore;
+                cb.FlatAppearance.BorderColor = border;
+                cb.FlatAppearance.CheckedBackColor = checkedBack;
+                cb.FlatAppearance.MouseOverBackColor = hoverBack;
+                cb.FlatAppearance.MouseDownBackColor = checkedBack;
+            }
+        }
+
+        /// <summary>The font of Scintilla's STYLE_DEFAULT, i.e. what Style Configurator calls the Global default font.</summary>
+        private static Font ReadEditorFont()
+        {
+            string name = Npp.editor.StyleGetFont((int)SciMsg.STYLE_DEFAULT);
+            int size = Npp.editor.StyleGetSize((int)SciMsg.STYLE_DEFAULT);
+            if (string.IsNullOrWhiteSpace(name) || size <= 0)
+                return null;
+            try
+            {
+                return new Font(name, size, FontStyle.Regular, GraphicsUnit.Point);
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+        }
+
+        private static Color Blend(Color from, Color to, float amount)
+        {
+            return Color.FromArgb(
+                (int)(from.R + (to.R - from.R) * amount),
+                (int)(from.G + (to.G - from.G) * amount),
+                (int)(from.B + (to.B - from.B) * amount));
         }
 
         /// <summary>
@@ -210,6 +310,7 @@ namespace NppSearchReplace.Forms
             base.OnVisibleChanged(e);
             if (Visible)
             {
+                Restyle(); // after base.OnVisibleChanged, so FormBase has already run FormStyle.ApplyStyle
                 ApplySplitterFromSettings();
                 ScheduleHighlight();
             }
@@ -325,6 +426,18 @@ namespace NppSearchReplace.Forms
         #endregion
 
         #region actions
+
+        private void DoFindFirst() => Guarded(() =>
+        {
+            _history.PushSearch(SearchText);
+            ReportFind(_engine.FindFirst(SearchText, CurrentOptions));
+        });
+
+        private void DoFindLast() => Guarded(() =>
+        {
+            _history.PushSearch(SearchText);
+            ReportFind(_engine.FindLast(SearchText, CurrentOptions));
+        });
 
         private void DoFindNext() => Guarded(() =>
         {

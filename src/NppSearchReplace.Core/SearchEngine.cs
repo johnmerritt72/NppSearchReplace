@@ -53,6 +53,43 @@ namespace NppSearchReplace.Core
 
         public SearchResult FindPrevious(string pattern, SearchOptions options) => Find(pattern, options, forward: false);
 
+        /// <summary>Select the first match in the document, regardless of the current selection or Loop.</summary>
+        public SearchResult FindFirst(string pattern, SearchOptions options) => FindFromEdge(pattern, options, fromStart: true);
+
+        /// <summary>Select the last match in the document, regardless of the current selection or Loop.</summary>
+        public SearchResult FindLast(string pattern, SearchOptions options) => FindFromEdge(pattern, options, fromStart: false);
+
+        private SearchResult FindFromEdge(string pattern, SearchOptions options, bool fromStart)
+        {
+            var r = new SearchResult();
+            if (string.IsNullOrEmpty(pattern))
+            {
+                r.EmptyPattern = true;
+                return r;
+            }
+            if (_t.Length > int.MaxValue)
+            {
+                r.TooLarge = true;
+                return r;
+            }
+            int length = (int)_t.Length;
+            string p = NormalizeNewlines(pattern);
+            _t.SetSearchFlags(options.ToScintillaFlags());
+            int found = fromStart ? _t.SearchInRange(0, length, p) : _t.SearchInRange(length, 0, p);
+            if (found < 0)
+            {
+                r.RegexError = _t.TakeRegexError();
+                return r;
+            }
+            r.Found = true;
+            r.Start = found;
+            r.End = _t.TargetEnd;
+            r.Line = _t.LineFromPosition(found);
+            _t.SetSelection(r.Start, r.End);
+            _t.ScrollCaretIntoView();
+            return r;
+        }
+
         /// <summary>
         /// If the current selection is exactly a match of pattern, replace it; then find the next match either way.
         /// </summary>
