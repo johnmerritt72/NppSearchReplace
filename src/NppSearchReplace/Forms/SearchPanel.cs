@@ -19,6 +19,11 @@ namespace NppSearchReplace.Forms
 
         private readonly IEditorTarget _editor = new ScintillaEditorTarget();
         private readonly SearchEngine _engine;
+        private readonly Highlighter _highlighter;
+        private readonly Timer _highlightTimer = new Timer { Interval = 300 };
+        private bool _suppressModifiedNotifications;
+        private const int ScModInsertText = 0x1;
+        private const int ScModDeleteText = 0x2;
 
         private CheckBox _regexToggle, _dotToggle, _caseToggle, _wordsToggle, _loopToggle, _highlightToggle;
         private Button _findNextButton, _findPrevButton, _replaceButton, _replaceAllButton, _countButton;
@@ -30,6 +35,8 @@ namespace NppSearchReplace.Forms
         public SearchPanel() : base(isModal: false, isDocking: true)
         {
             _engine = new SearchEngine(_editor);
+            _highlighter = new Highlighter(_editor, Math.Max(1, Main.settings.highlight_cap));
+            _highlightTimer.Tick += (s, e) => { _highlightTimer.Stop(); RefreshHighlight(); };
             Text = "Search & Replace";
             BuildLayout();
             LoadOptionsFromSettings();
@@ -106,6 +113,10 @@ namespace NppSearchReplace.Forms
 
             _regexToggle.CheckedChanged += (s, e) => { _dotToggle.Enabled = _regexToggle.Checked; _wordsToggle.Enabled = !_regexToggle.Checked; };
             _dotToggle.Enabled = false;
+            _searchBox.TextChanged += (s, e) => ScheduleHighlight();
+            foreach (CheckBox toggle in new[] { _regexToggle, _dotToggle, _caseToggle, _wordsToggle })
+                toggle.CheckedChanged += (s, e) => ScheduleHighlight();
+            _highlightToggle.CheckedChanged += (s, e) => { if (_highlightToggle.Checked) ScheduleHighlight(); else Guarded(ClearHighlights); };
             ResumeLayout(true);
         }
 
@@ -159,7 +170,76 @@ namespace NppSearchReplace.Forms
 
         protected override void OnDockingPanelClosed()
         {
+            Guarded(ClearHighlights);
             Main.OnPanelClosedByUser();
+        }
+
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            base.OnVisibleChanged(e);
+            if (Visible)
+                ScheduleHighlight();
+            else
+                Guarded(ClearHighlights);
+        }
+
+        #endregion
+
+        #region highlighting
+
+        private void ScheduleHighlight()
+        {
+            if (!HighlightEnabled)
+                return;
+            _highlightTimer.Stop();
+            _highlightTimer.Start();
+        }
+
+        private void RefreshHighlight()
+        {
+            Guarded(() =>
+            {
+                if (!HighlightEnabled || !Visible || Main.isShuttingDown)
+                    return;
+                HighlightResult r = _highlighter.Apply(SearchText, CurrentOptions);
+                if (r.IndicatorUnavailable) SetStatus("Highlighting unavailable (no free indicator)", true);
+                else if (r.TooLarge) SetStatus("Document too large (over 2 GB)", true);
+                else if (r.RegexError) SetStatus("Invalid regular expression", true);
+                else if (r.Capped) SetStatus("Highlight capped at " + r.Count + " matches", false);
+                else if (string.IsNullOrEmpty(SearchText)) SetStatus("Enter a search text", false);
+                else SetStatus(r.Count + " matches", false);
+            });
+        }
+
+        public void ClearHighlights()
+        {
+            _highlightTimer.Stop();
+            _highlighter.ClearCurrent();
+        }
+
+        /// <summary>Another document became active: repaint it, or clean it up if we painted it earlier.</summary>
+        public void OnBufferActivated(IntPtr bufferId)
+        {
+            Guarded(() =>
+            {
+                if (HighlightEnabled && Visible && !string.IsNullOrEmpty(SearchText))
+                    ScheduleHighlight();
+                else if (_highlighter.IsTouched(bufferId))
+                    _highlighter.ClearCurrent();
+            });
+        }
+
+        public void OnFileClosed(IntPtr bufferId)
+        {
+            _highlighter.Forget(bufferId);
+        }
+
+        public void OnDocumentModified(int modificationType)
+        {
+            if (_suppressModifiedNotifications || !HighlightEnabled || !Visible)
+                return;
+            if ((modificationType & (ScModInsertText | ScModDeleteText)) != 0)
+                ScheduleHighlight();
         }
 
         #endregion
@@ -222,7 +302,17 @@ namespace NppSearchReplace.Forms
 
         private void DoReplaceAll() => Guarded(() =>
         {
-            ReplaceAllResult r = _engine.ReplaceAll(SearchText, ReplaceText, CurrentOptions);
+            _suppressModifiedNotifications = true;
+            ReplaceAllResult r;
+            try
+            {
+                r = _engine.ReplaceAll(SearchText, ReplaceText, CurrentOptions);
+            }
+            finally
+            {
+                _suppressModifiedNotifications = false;
+            }
+            ScheduleHighlight();
             if (r.EmptyPattern) SetStatus("Enter a search text", false);
             else if (r.TooLarge) SetStatus("Document too large (over 2 GB)", true);
             else if (r.RegexError) SetStatus("Invalid regular expression", true);

@@ -55,6 +55,16 @@ namespace Kbg.NppPluginNET
                     Npp.editor.GrabFocus();
                 }
                 break;
+            case (uint)NppMsg.NPPN_BUFFERACTIVATED:
+                Npp.editor = new ScintillaGateway(PluginBase.GetCurrentScintilla());
+                searchPanel?.OnBufferActivated(notification.Header.IdFrom);
+                break;
+            case (uint)NppMsg.NPPN_FILECLOSED:
+                searchPanel?.OnFileClosed(notification.Header.IdFrom);
+                break;
+            case (uint)SciMsg.SCN_MODIFIED:
+                searchPanel?.OnDocumentModified(notification.ModificationType);
+                break;
             case (uint)NppMsg.NPPN_WORDSTYLESUPDATED:
                 RestyleEverything();
                 break;
@@ -72,6 +82,7 @@ namespace Kbg.NppPluginNET
             settings.SaveToIniFile();
             if (searchPanel != null && !searchPanel.IsDisposed)
             {
+                searchPanel.ClearHighlights();
                 searchPanel.Close();
                 searchPanel.Dispose();
             }
@@ -124,7 +135,10 @@ namespace Kbg.NppPluginNET
         public static void HideSearchPanel()
         {
             if (searchPanel != null && !searchPanel.IsDisposed)
+            {
+                searchPanel.ClearHighlights();
                 Npp.notepad.HideDockingForm(searchPanel);
+            }
             settings.panel_visible = false;
             SetPanelMenuCheck(false);
         }
